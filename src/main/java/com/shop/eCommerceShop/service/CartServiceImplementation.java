@@ -16,12 +16,14 @@ public class CartServiceImplementation implements CartService {
 	private CartRepository cartRepository;
 	private CartItemService cartItemService;
 	private ProductService productService;
+	private UserService userService;
 	
 	public CartServiceImplementation(CartRepository cartRepository,
-			CartItemService cartItemService,ProductService productService) {
+			CartItemService cartItemService,ProductService productService, UserService userService) {
 		this.cartRepository=cartRepository;
 		this.cartItemService=cartItemService;
 		this.productService=productService;
+		this.userService=userService;
 	}
 	
 	@Override
@@ -35,6 +37,13 @@ public class CartServiceImplementation implements CartService {
 	public String addCartItem(int userId, AddItemRequest req) throws HandleException {
 		
 		Cart cart = cartRepository.findByUserId(userId);
+		
+		// Create cart if it doesn't exist
+		if(cart == null) {
+			User user = userService.findUserById(userId);
+			cart = createCart(user);
+		}
+		
 		Product product = productService.findProductById(req.getProductId());
 		
 		CartItem isPresent = cartItemService.isCartItemExist(cart, product, req.getSize(), userId);
@@ -45,11 +54,9 @@ public class CartServiceImplementation implements CartService {
 			cartItem.setCart(cart);
 			cartItem.setQuantity(req.getQuantity());
 			cartItem.setUserId(userId);
-			
-			double price = req.getQuantity()*product.getDiscountPrice();
-			cartItem.setPrice(price);
 			cartItem.setSize(req.getSize());
 			
+			// createCartItem will calculate both price and discountedPrice based on quantity
 			CartItem createdCartItem=cartItemService.createCartItem(cartItem);
 			cart.getCartItems().add(createdCartItem);
 		}
@@ -59,6 +66,17 @@ public class CartServiceImplementation implements CartService {
 	@Override
 	public Cart findUserCart(int userId) {
 		Cart cart = cartRepository.findByUserId(userId);
+		
+		// Create cart if it doesn't exist
+		if(cart == null) {
+			try {
+				User user = userService.findUserById(userId);
+				cart = createCart(user);
+			} catch (HandleException e) {
+				// If user not found, return empty cart or handle error
+				return null;
+			}
+		}
 		
 		double totalPrice = 0;
 		double totalDiscountedPrice=0;

@@ -28,9 +28,22 @@ public class CartItemServiceImplementaion implements CartItemService{
 	
 	@Override
 	public CartItem createCartItem(CartItem cartItem) {
-		cartItem.setQuantity(1);
-		cartItem.setPrice(cartItem.getProduct().getPrice()*cartItem.getQuantity());
-		cartItem.setDiscountedPrice(cartItem.getProduct().getDiscountPrice()*cartItem.getQuantity());
+		// Don't override quantity - use the quantity that was already set
+		// If quantity is 0 or less, default to 1
+		if(cartItem.getQuantity() <= 0) {
+			cartItem.setQuantity(1);
+		}
+		
+		double productPrice = cartItem.getProduct().getPrice();
+		double productDiscountPrice = cartItem.getProduct().getDiscountPrice();
+		
+		// If discountPrice is 0 or less, use regular price (no discount)
+		if(productDiscountPrice <= 0) {
+			productDiscountPrice = productPrice;
+		}
+		
+		cartItem.setPrice(productPrice * cartItem.getQuantity());
+		cartItem.setDiscountedPrice(productDiscountPrice * cartItem.getQuantity());
 		
 		CartItem createdCartItem=cartItemRepository.save(cartItem);
 		return createdCartItem;
@@ -44,8 +57,17 @@ public class CartItemServiceImplementaion implements CartItemService{
 		
 		if(user.getId()== userId) {
 			item.setQuantity(cartItem.getQuantity());
-			item.setPrice(item.getQuantity()*item.getProduct().getPrice());
-			item.setDiscountedPrice(item.getProduct().getDiscountPrice()*item.getQuantity());
+			
+			double productPrice = item.getProduct().getPrice();
+			double productDiscountPrice = item.getProduct().getDiscountPrice();
+			
+			// If discountPrice is 0 or less, use regular price (no discount)
+			if(productDiscountPrice <= 0) {
+				productDiscountPrice = productPrice;
+			}
+			
+			item.setPrice(item.getQuantity() * productPrice);
+			item.setDiscountedPrice(productDiscountPrice * item.getQuantity());
 		}
 		return cartItemRepository.save(item);
 	}

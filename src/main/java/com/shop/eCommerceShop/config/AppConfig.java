@@ -36,7 +36,7 @@ public class AppConfig {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
         .authorizeHttpRequests(Authorize->Authorize
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/products", "/api/product/**").permitAll()
+                .requestMatchers("/api/products", "/api/product/**", "/api/reviews/product/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll())
         .addFilterBefore(new JwtValidator(),BasicAuthenticationFilter.class)

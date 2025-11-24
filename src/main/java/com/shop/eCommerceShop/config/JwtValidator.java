@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,10 +28,10 @@ public class JwtValidator extends OncePerRequestFilter{
 		
 		String jwt = request.getHeader(JwtConstant.JWT_HEADER);
 		
-		if(jwt!=null) {
+		if(jwt!=null && jwt.startsWith("Bearer ")) {
 			
-			jwt=jwt.substring(7);
 			try {
+				jwt=jwt.substring(7);
 				SecretKey key =Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 				
 				Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
@@ -46,10 +45,10 @@ public class JwtValidator extends OncePerRequestFilter{
 				
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 				
-				
-				
 			} catch (Exception e) {
-				throw new BadCredentialsException("Invalid token... from jwt validator");
+				// For permitAll endpoints, don't throw exception - just continue without authentication
+				// Spring Security will handle authorization based on the security configuration
+				// For protected endpoints, Spring Security will reject requests without valid authentication
 			}
 		}
 		
