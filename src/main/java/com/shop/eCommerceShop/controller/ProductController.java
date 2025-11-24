@@ -2,6 +2,7 @@ package com.shop.eCommerceShop.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +20,21 @@ import com.shop.eCommerceShop.service.ProductService;
 @RequestMapping("/api")
 public class ProductController {
 	
+	@Autowired
 	private ProductService productService;
 	
 	@GetMapping("/products")
-	public ResponseEntity<Page<Product>>findProductByCategoryHandler(@RequestParam String category,
-			@RequestParam List<String>color,@RequestParam List<String>size,@RequestParam Integer minPrice,
-			@RequestParam Integer maxPrice,@RequestParam Integer minDiscount, @RequestParam String sort,
-			@RequestParam String stock, @RequestParam Integer pageNumber, @RequestParam Integer pageSize){
+	public ResponseEntity<Page<Product>>findProductByCategoryHandler(
+			@RequestParam(required = false) String category,
+			@RequestParam(required = false) List<String> color,
+			@RequestParam(required = false) List<String> size,
+			@RequestParam(required = false) Integer minPrice,
+			@RequestParam(required = false) Integer maxPrice,
+			@RequestParam(required = false) Integer minDiscount,
+			@RequestParam(required = false, defaultValue = "price_low") String sort,
+			@RequestParam(required = false) String stock,
+			@RequestParam(required = false, defaultValue = "0") Integer pageNumber,
+			@RequestParam(required = false, defaultValue = "12") Integer pageSize){
 		
 		Page<Product> res = productService.getAllProduct(category, color, size, 
 				minPrice, maxPrice, minDiscount, sort, 

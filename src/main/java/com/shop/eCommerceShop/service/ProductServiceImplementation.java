@@ -37,37 +37,59 @@ public class ProductServiceImplementation implements ProductService{
 	@Override
 	public Product createProduct(CreateProductRequest req) {
 		
-		Category topLevel=categoryRepository.findByName(req.getTopLevelCategory());
+		Category category = null;
 		
-		if(topLevel==null) {
-			Category topLavelCategory=new Category();
-			topLavelCategory.setName(req.getTopLevelCategory());
-			topLavelCategory.setLevel(1);
+		// Handle category hierarchy - use the first non-empty category level
+		if(req.getTopLevelCategory() != null && !req.getTopLevelCategory().trim().isEmpty()) {
+			Category topLevel = categoryRepository.findByName(req.getTopLevelCategory());
 			
-			topLevel=categoryRepository.save(topLavelCategory);
+			if(topLevel == null) {
+				Category topLavelCategory = new Category();
+				topLavelCategory.setName(req.getTopLevelCategory());
+				topLavelCategory.setLevel(1);
+				topLevel = categoryRepository.save(topLavelCategory);
+			}
+			
+			if(req.getSecondLevelCategory() != null && !req.getSecondLevelCategory().trim().isEmpty()) {
+				Category secondLevel = categoryRepository.findByNameAndParant(req.getSecondLevelCategory(), topLevel.getName());
+				
+				if(secondLevel == null) {
+					Category secondLavelCategory = new Category();
+					secondLavelCategory.setName(req.getSecondLevelCategory());
+					secondLavelCategory.setParentCategory(topLevel);
+					secondLavelCategory.setLevel(2);
+					secondLevel = categoryRepository.save(secondLavelCategory);
+				}
+				
+				if(req.getThirdLevelCategory() != null && !req.getThirdLevelCategory().trim().isEmpty()) {
+					Category thirdLevel = categoryRepository.findByNameAndParant(req.getThirdLevelCategory(), secondLevel.getName());
+					if(thirdLevel == null) {
+						Category thirdLavelCategory = new Category();
+						thirdLavelCategory.setName(req.getThirdLevelCategory());
+						thirdLavelCategory.setParentCategory(secondLevel);
+						thirdLavelCategory.setLevel(3);
+						thirdLevel = categoryRepository.save(thirdLavelCategory);
+					}
+					category = thirdLevel;
+				} else {
+					category = secondLevel;
+				}
+			} else {
+				category = topLevel;
+			}
 		}
 		
-		Category secondLevel=categoryRepository.
-				findByNameAndParant(req.getSecondLevelCategory(), topLevel.getName());
-		
-		if(secondLevel==null) {
-			
-			Category secondLavelCategory=new Category();
-			secondLavelCategory.setName(req.getSecondLevelCategory());
-			secondLavelCategory.setParentCategory(topLevel);
-			secondLavelCategory.setLevel(2);
-			
-			secondLevel=categoryRepository.save(secondLavelCategory);
-		}
-		
-		Category thirdLevel=categoryRepository.findByNameAndParant(req.getThirdLevelCategory(),secondLevel.getName());
-		if(thirdLevel==null) {
-			Category thirdLavelCategory=new Category();
-			thirdLavelCategory.setName(req.getThirdLevelCategory());
-			thirdLavelCategory.setParentCategory(secondLevel);
-			thirdLavelCategory.setLevel(3);
-			
-			thirdLevel=categoryRepository.save(thirdLavelCategory);
+		// If no category provided, create a default "Uncategorized" category
+		if(category == null) {
+			Category defaultCategory = categoryRepository.findByName("Uncategorized");
+			if(defaultCategory == null) {
+				defaultCategory = new Category();
+				defaultCategory.setName("Uncategorized");
+				defaultCategory.setLevel(1);
+				category = categoryRepository.save(defaultCategory);
+			} else {
+				category = defaultCategory;
+			}
 		}
 		
 		Product product = new Product();
@@ -81,7 +103,7 @@ public class ProductServiceImplementation implements ProductService{
 		product.setPrice(req.getPrice());
 		product.setSizes(req.getSizes());
 		product.setQuantity(req.getQuantity());
-		product.setCategory(thirdLevel);
+		product.setCategory(category);
 		product.setCreatedAt(LocalDateTime.now());
 		
 		Product savedProduct = productRepository.save(product);
@@ -101,9 +123,37 @@ public class ProductServiceImplementation implements ProductService{
 	public Product updateProduct(int productId, Product req) throws HandleException {
 		Product product = findProductById(productId);
 		
-		if(req.getQuantity()!=0) {
+		if(req.getTitle() != null && !req.getTitle().trim().isEmpty()) {
+			product.setTitle(req.getTitle());
+		}
+		if(req.getDescription() != null) {
+			product.setDescription(req.getDescription());
+		}
+		if(req.getPrice() != 0) {
+			product.setPrice(req.getPrice());
+		}
+		if(req.getDiscountPrice() != 0) {
+			product.setDiscountPrice(req.getDiscountPrice());
+		}
+		if(req.getDiscountPersent() != 0) {
+			product.setDiscountPersent(req.getDiscountPersent());
+		}
+		if(req.getQuantity() != 0) {
 			product.setQuantity(req.getQuantity());
 		}
+		if(req.getBrand() != null && !req.getBrand().trim().isEmpty()) {
+			product.setBrand(req.getBrand());
+		}
+		if(req.getColor() != null) {
+			product.setColor(req.getColor());
+		}
+		if(req.getImageUrl() != null && !req.getImageUrl().trim().isEmpty()) {
+			product.setImageUrl(req.getImageUrl());
+		}
+		if(req.getSizes() != null && !req.getSizes().isEmpty()) {
+			product.setSizes(req.getSizes());
+		}
+		
 		return productRepository.save(product);
 	}
 
@@ -131,9 +181,19 @@ public class ProductServiceImplementation implements ProductService{
 		
 		List<Product> products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort);
 		
-		if(!colors.isEmpty()) {
+		if(colors != null && !colors.isEmpty()) {
 			products=products.stream().filter(p-> colors.stream().anyMatch(c->c.equalsIgnoreCase(p.getColor())))
 					.collect(Collectors.toList()); 
+		}
+		
+		if(sizes != null && !sizes.isEmpty()) {
+			products=products.stream().filter(p-> {
+				if(p.getSizes() == null || p.getSizes().isEmpty()) return false;
+				return p.getSizes().stream().anyMatch(s-> {
+					String sizeName = s.getName() != null ? s.getName() : s.toString();
+					return sizes.stream().anyMatch(size->size.equalsIgnoreCase(sizeName));
+				});
+			}).collect(Collectors.toList());
 		}
 		
 		if(stock!=null) {
@@ -141,7 +201,7 @@ public class ProductServiceImplementation implements ProductService{
 				products=products.stream().filter(p->p.getQuantity()>0).collect(Collectors.toList());
 			}
 			else if(stock.equals("out_of_stock")) {
-				products=products.stream().filter(p->p.getQuantity()>0).collect(Collectors.toList());
+				products=products.stream().filter(p->p.getQuantity()==0).collect(Collectors.toList());
 			}
 		}
 		

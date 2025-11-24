@@ -59,6 +59,10 @@ public class AuthController {
 		createdUser.setPassword(passwordEncoder.encode(password));
 		createdUser.setFirstName(firstName);
 		createdUser.setLastName(lastName);
+		// Set default role to USER if not provided
+		if(createdUser.getRole() == null || createdUser.getRole().isEmpty()) {
+			createdUser.setRole("USER");
+		}
 		
 		User savedUser=userRepository.save(createdUser);
 		

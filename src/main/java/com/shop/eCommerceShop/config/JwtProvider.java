@@ -16,10 +16,16 @@ public class JwtProvider {
 	SecretKey key =Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
 	public String generateToken(Authentication auth) {
+		String authorities = auth.getAuthorities().stream()
+				.map(authority -> authority.getAuthority())
+				.reduce((a, b) -> a + "," + b)
+				.orElse("");
+		
 		String jwt=Jwts.builder()
 				.setIssuedAt(new Date())
 				.setExpiration(new Date(new Date().getTime()+846000000))
 				.claim("email", auth.getName())
+				.claim("authorities", authorities)
 				.signWith(key).compact();
 		
 		return jwt;
