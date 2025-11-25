@@ -8,6 +8,6 @@ import com.shop.eCommerceShop.model.Cart;
 
 public interface CartRepository extends JpaRepository<Cart, Integer>{
 	
-	@Query("SELECT c FROM Cart c WHERE c.user.id=:userId")
+	@Query("SELECT DISTINCT c FROM Cart c LEFT JOIN FETCH c.cartItems ci LEFT JOIN FETCH ci.product WHERE c.user.id=:userId")
 	public Cart findByUserId(@Param("userId")Integer userId);
 }

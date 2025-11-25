@@ -28,7 +28,7 @@ public class AdminOrderController {
 	@GetMapping
 	public ResponseEntity<List<Order>>getAllOrderHandler(){
 		List<Order>orders=orderService.getAOrders();
-		return new ResponseEntity<List<Order>>(orders,HttpStatus.ACCEPTED);
+		return new ResponseEntity<List<Order>>(orders,HttpStatus.OK);
 	}
 	
 	@PutMapping("/{orderId}/confirmed")

@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,45 +15,54 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", 
+       uniqueConstraints = {})
 public class Order {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 	
-	@Column(name = "order_id")
+	@Column(name = "order_id", unique = true)
 	private String orderId;
 	
 	@ManyToOne
 	private User user;
 	
 	@OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	private List<OrderItem>orderItems=new ArrayList<>();
 	
+	@Column(name = "order_date")
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime orderDate;
 	
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime deliveryDate;
 	
-	@OneToOne
+	@ManyToOne
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private Address shippingAddress;
 	
 	private PaymentDetails paymentDetails= new PaymentDetails();
 	
+	@Column(name = "total_price")
 	private double totalPrice;
 	
+	@Column(name = "total_discount_price")
 	private double totalDiscountPrice;
 	
 	private double discount;
 	
 	private String orderStatus;
 	
+	@Column(name = "total_item")
 	private int totalItem;
 	
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createAt;
 
 	public Order() {

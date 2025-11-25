@@ -9,7 +9,7 @@ import com.shop.eCommerceShop.model.User;
 
 public interface OrderService {
 	
-	public Order createOrder(User user, Address shippingAddress);
+	public Order createOrder(User user, Address shippingAddress) throws HandleException;
 	
 	public Order findOrderById(int orderId) throws HandleException;
 	

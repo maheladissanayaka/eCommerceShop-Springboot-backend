@@ -96,8 +96,6 @@ public class ProductServiceImplementation implements ProductService{
 		product.setTitle(req.getTitle());
 		product.setColor(req.getColor());
 		product.setDescription(req.getDescription());
-		product.setDiscountPrice(req.getDiscountPrice());
-		product.setDiscountPersent(req.getDiscountPersent());
 		product.setImageUrl(req.getImageUrl());
 		product.setBrand(req.getBrand());
 		product.setPrice(req.getPrice());
@@ -105,6 +103,17 @@ public class ProductServiceImplementation implements ProductService{
 		product.setQuantity(req.getQuantity());
 		product.setCategory(category);
 		product.setCreatedAt(LocalDateTime.now());
+		
+		// Calculate discountPrice from discountPersent if provided
+		if (req.getDiscountPersent() > 0) {
+			product.setDiscountPersent(req.getDiscountPersent());
+			double discountPrice = req.getPrice() * (1 - req.getDiscountPersent() / 100.0);
+			product.setDiscountPrice(discountPrice);
+		} else {
+			// If no discount percentage, use the provided discountPrice or set to price
+			product.setDiscountPersent(0);
+			product.setDiscountPrice(req.getDiscountPrice() > 0 ? req.getDiscountPrice() : req.getPrice());
+		}
 		
 		Product savedProduct = productRepository.save(product);
 		
@@ -132,11 +141,18 @@ public class ProductServiceImplementation implements ProductService{
 		if(req.getPrice() != 0) {
 			product.setPrice(req.getPrice());
 		}
-		if(req.getDiscountPrice() != 0) {
-			product.setDiscountPrice(req.getDiscountPrice());
-		}
-		if(req.getDiscountPersent() != 0) {
+		// Calculate discountPrice from discountPersent if provided
+		if(req.getDiscountPersent() > 0) {
 			product.setDiscountPersent(req.getDiscountPersent());
+			double discountPrice = product.getPrice() * (1 - req.getDiscountPersent() / 100.0);
+			product.setDiscountPrice(discountPrice);
+		} else if(req.getDiscountPrice() > 0) {
+			// If discountPrice is provided but no discountPersent, calculate the percentage
+			product.setDiscountPrice(req.getDiscountPrice());
+			if(product.getPrice() > 0) {
+				double discountPercent = ((product.getPrice() - req.getDiscountPrice()) / product.getPrice()) * 100.0;
+				product.setDiscountPersent(discountPercent);
+			}
 		}
 		if(req.getQuantity() != 0) {
 			product.setQuantity(req.getQuantity());

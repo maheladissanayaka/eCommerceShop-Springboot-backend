@@ -2,6 +2,8 @@ package com.shop.eCommerceShop.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,6 +20,7 @@ public class OrderItem {
 	private Product product;
 	
 	@ManyToOne
+	@JsonIgnore
     private Order order;
 	
 	private String size;
