@@ -3,7 +3,9 @@ package com.shop.eCommerceShop.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -15,6 +17,7 @@ import com.shop.eCommerceShop.model.Cart;
 import com.shop.eCommerceShop.model.User;
 import com.shop.eCommerceShop.request.AddItemRequest;
 import com.shop.eCommerceShop.responce.ApiResponse;
+import com.shop.eCommerceShop.service.CartItemService;
 import com.shop.eCommerceShop.service.CartService;
 import com.shop.eCommerceShop.service.UserService;
 
@@ -24,6 +27,9 @@ public class CartController {
 	
 	@Autowired
 	private CartService cartService;
+	
+	@Autowired
+	private CartItemService cartItemService;
 	
 	@Autowired
 	private UserService userService;
@@ -46,5 +52,17 @@ public class CartController {
 		res.setMessage("Item added to cart");
 		res.setStatus(true);
 		return new ResponseEntity<>(res,HttpStatus.OK);
+	}
+	
+	@DeleteMapping("/item/{cartItemId}")
+	public ResponseEntity<ApiResponse> removeCartItem(@PathVariable Integer cartItemId,
+			@RequestHeader("Authorization") String jwt) throws HandleException {
+		User user = userService.findUserProfileByJwt(jwt);
+		cartItemService.removeCartItem(user.getId(), cartItemId);
+		
+		ApiResponse res = new ApiResponse();
+		res.setMessage("Item removed from cart");
+		res.setStatus(true);
+		return new ResponseEntity<>(res, HttpStatus.OK);
 	}
 }
